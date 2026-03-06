@@ -13,4 +13,7 @@ app.get('/api/health', (req, res) => {
     });
 });
 
+const operationalRoutes = require('./routes/operationalRoutes');
+app.use('/api/operational-hours', operationalRoutes);
+
 module.exports = app;
