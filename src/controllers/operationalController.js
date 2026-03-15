@@ -1,90 +1,125 @@
-// Mock Database sementara
-let schedules = [
-    { id: 1, day: "Senin", open: "04:00", close: "21:00", isClosed: false },
-    { id: 2, day: "Jumat", open: "03:30", close: "22:00", isClosed: false }
-];
+const { PrismaClient } = require('@prisma/client');
 
-const getAllSchedules = (req, res) => {
-    res.status(200).json({
-        success: true,
-        message: "Berhasil mengambil jadwal operasional",
-        data: schedules
-    });
+const prisma = new PrismaClient();
+
+// Read
+const getAllSchedules = async (req, res) => {
+    try {
+        const schedules = await prisma.operationalHour.findMany({
+            orderBy: { id: 'asc' }
+        });
+
+        res.status(200).json({
+            success: true,
+            message: "Berhasil mengambil jadwal operasional dari database",
+            data: schedules
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: "Terjadi kesalahan pada server" });
+    }
 };
 
-const addSchedule = (req, res) => {
+// Update
+const updateSchedule = async (req, res) => {
+    const { id } = req.params;
+    const { day, open, close, isClosed } = req.body;
+
+    try {
+        const existingSchedule = await prisma.operationalHour.findUnique({
+            where: { id: parseInt(id) }
+        });
+
+        if (!existingSchedule) {
+            return res.status(404).json({
+                success: false,
+                message: `Jadwal dengan ID ${id} tidak ditemukan`
+            });
+        }
+
+        let finalOpen = open;
+        let finalClose = close;
+
+        if (isClosed === true) {
+            finalOpen = "-";
+            finalClose = "-";
+        }
+
+        // Update ke database
+        const updatedSchedule = await prisma.operationalHour.update({
+            where: { id: parseInt(id) },
+            data: {
+                day: day || existingSchedule.day,
+                open: finalOpen || existingSchedule.open,
+                close: finalClose || existingSchedule.close,
+                isClosed: isClosed !== undefined ? isClosed : existingSchedule.isClosed
+    
+            }
+        });
+
+        res.status(200).json({
+            success: true,
+            message: "Jadwal berhasil diupdate di database",
+            data: updatedSchedule
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: "Terjadi kesalahan pada server" });
+    }
+};
+
+// Create
+const addSchedule = async (req, res) => {
     const { day, open, close, isClosed } = req.body;
 
     if (!day) {
-        return res.status(400).json({
-            success: false,
-            message: "Nama hari wajib diisi!"
-        });
+        return res.status(400).json({ success: false, message: "Nama hari wajib diisi!" });
     }
 
-    const newSchedule = {
-        id: schedules.length > 0 ? schedules[schedules.length - 1].id + 1 : 1,
-        day,
-        open: open || "-",
-        close: close || "-",
-        isClosed: isClosed || false
-    };
+    try {
+        const newSchedule = await prisma.operationalHour.create({
+            data: {
+                day,
+                open: open || "-",
+                close: close || "-",
+                isClosed: isClosed || false
+            }
+        });
 
-    schedules.push(newSchedule);
-
-    res.status(201).json({
-        success: true,
-        message: "Jadwal berhasil ditambahkan",
-        data: newSchedule
-    });
+        res.status(201).json({ success: true, message: "Jadwal berhasil ditambahkan ke database", data: newSchedule });
+    } catch (error) {
+        if (error.code === 'P2002') {
+            return res.status(409).json({ success: false, message: `Jadwal hari ${day} sudah ada!` });
+        }
+        console.error(error);
+        res.status(500).json({ success: false, message: "Terjadi kesalahan pada server" });
+    }
 };
 
-const updateSchedule = (req, res) => {
-    const { id } = req.params;
-    const { day, open, close, isClosed } = req.body;
-
-    const index = schedules.findIndex(s => s.id === parseInt(id));
-
-    if (index === -1) {
-        return res.status(404).json({
-            success: false,
-            message: `Jadwal dengan ID ${id} tidak ditemukan`
-        });
-    }
-
-    schedules[index] = {
-        ...schedules[index],
-        day: day || schedules[index].day,
-        open: open || schedules[index].open,
-        close: close || schedules[index].close,
-        isClosed: isClosed !== undefined ? isClosed : schedules[index].isClosed
-    };
-
-    res.status(200).json({
-        success: true,
-        message: "Jadwal berhasil diupdate",
-        data: schedules[index]
-    });
-};
-
-const deleteSchedule = (req, res) => {
+// Delete
+const deleteSchedule = async (req, res) => {
     const { id } = req.params;
 
-    const index = schedules.findIndex(s => s.id === parseInt(id));
-
-    if (index === -1) {
-        return res.status(404).json({
-            success: false,
-            message: `Jadwal dengan ID ${id} tidak ditemukan`
+    try {
+        const existingSchedule = await prisma.operationalHour.findUnique({
+            where: { id: parseInt(id) }
         });
+
+        if (!existingSchedule) {
+            return res.status(404).json({ success: false, message: `Jadwal dengan ID ${id} tidak ditemukan` });
+        }
+
+        await prisma.operationalHour.delete({
+            where: { id: parseInt(id) }
+        });
+
+        res.status(200).json({ success: true, message: `Jadwal dengan ID ${id} (${existingSchedule.day}) berhasil dihapus dari database` });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: "Terjadi kesalahan pada server" });
     }
-
-    schedules.splice(index, 1);
-
-    res.status(200).json({
-        success: true,
-        message: `Jadwal dengan ID ${id} berhasil dihapus`
-    });
 };
 
 module.exports = {
