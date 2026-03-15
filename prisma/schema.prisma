@@ -5,10 +5,101 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
+}
+
+generator erd {
+  provider = "prisma-erd-generator"
+  output   = "../ERD.png" 
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Users
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  name         String
+  role         Role     @default(USER)
+  googleId     String   @unique
+  accessToken  String?  @db.Text
+  refreshToken String?  @db.Text
+  
+  news         News[]
+  participated ActivityParticipant[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("users")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+// Jam Operasional
+model OperationalHour {
+  id        Int      @id @default(autoincrement())
+  day       String   @unique
+  open      String
+  close     String
+  isClosed  Boolean  @default(false)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("operational_hours")
+}
+
+// Berita
+model News {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String   @db.Text
+  imageUrl  String?
+  
+  authorId  Int
+  author    User     @relation(fields: [authorId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("news")
+}
+
+// Kegiatan
+model Activity {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String   @db.Text
+  startTime   DateTime
+  endTime     DateTime
+
+  participants ActivityParticipant[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("activities")
+}
+
+// Peserta Kegiatan
+model ActivityParticipant {
+  id         Int      @id @default(autoincrement())
+  
+  userId     Int
+  activityId Int
+  
+  user       User     @relation(fields: [userId], references: [id])
+  activity   Activity @relation(fields: [activityId], references: [id])
+
+  joinedAt   DateTime @default(now())
+
+  @@unique([userId, activityId])
+  @@map("activity_participants")
 }
