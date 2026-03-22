@@ -16,7 +16,8 @@
     "@prisma/client": "^6.19.2",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "moment-timezone": "^0.6.1"
   },
   "devDependencies": {
     "@mermaid-js/mermaid-cli": "^11.12.0",
