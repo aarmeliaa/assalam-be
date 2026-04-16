@@ -15,8 +15,10 @@ app.get('/api/health', (req, res) => {
 
 const operationalRoutes = require('./routes/operationalRoutes');
 const activityRoutes = require('./routes/activityRoutes');
+const newsRoutes = require('./routes/newsRoutes');
 
 app.use('/api/operational-hours', operationalRoutes);
 app.use('/api/activities', activityRoutes);
+app.use('/api/news', newsRoutes);
 
 module.exports = app;

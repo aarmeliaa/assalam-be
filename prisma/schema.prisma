@@ -43,6 +43,11 @@ enum Role {
   ADMIN
 }
 
+enum NewsStatus {
+  DRAFT
+  PUBLISHED
+}
+
 // Jam Operasional
 model OperationalHour {
   id        Int      @id @default(autoincrement())
@@ -61,8 +66,10 @@ model OperationalHour {
 model News {
   id        Int      @id @default(autoincrement())
   title     String
+  summary   String?  @db.Text
   content   String   @db.Text
   imageUrl  String?
+  status    NewsStatus @default(DRAFT)
   
   authorId  Int
   author    User     @relation(fields: [authorId], references: [id])
