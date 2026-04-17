@@ -67,6 +67,10 @@ const updateActivity = async (req, res) => {
     const { title, startDate, startTime, endDate, endTime, description } = req.body;
 
     try {
+        if (isNaN(id)) {
+            return res.status(400).json({ success: false, message: 'Format ID tidak valid, harus berupa angka!' });
+        }
+
         const existingActivity = await prisma.activity.findUnique({
             where: { id: parseInt(id) }
         });
@@ -114,6 +118,10 @@ const deleteActivity = async (req, res) => {
     const { id } = req.params;
 
     try {
+        if (isNaN(id)) {
+            return res.status(400).json({ success: false, message: 'Format ID tidak valid, harus berupa angka!' });
+        }
+
         const existingActivity = await prisma.activity.findUnique({
             where: { id: parseInt(id) }
         });
@@ -137,9 +145,33 @@ const deleteActivity = async (req, res) => {
     }
 };
 
+// Read by ID
+const getActivityById = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (isNaN(id)) {
+            return res.status(400).json({ success: false, message: 'Format ID tidak valid, harus berupa angka!' });
+        }
+
+        const activity = await prisma.activity.findUnique({
+            where: { id: parseInt(id) }
+        });
+
+        if (!activity) {
+            return res.status(404).json({ success: false, message: 'Aktivitas tidak ditemukan!' });
+        }
+
+        res.status(200).json({ success: true, data: activity });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Gagal mengambil detail aktivitas: ' + error.message });
+    }
+};
+
 module.exports = {
     createActivity,
     getAllActivities,
     updateActivity,
-    deleteActivity
+    deleteActivity,
+    getActivityById
 };

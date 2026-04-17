@@ -63,6 +63,10 @@ const updateNews = async (req, res) => {
         const { id } = req.params;
         const { title, summary, content, status } = req.body;
 
+        if (isNaN(id)) {
+            return res.status(400).json({ success: false, message: 'Format ID tidak valid!' });
+        }
+
         const existingNews = await prisma.news.findUnique({ 
             where: { id: parseInt(id) } 
         });
@@ -106,6 +110,10 @@ const deleteNews = async (req, res) => {
     try {
         const { id } = req.params;
 
+        if (isNaN(id)) {
+            return res.status(400).json({ success: false, message: 'Format ID tidak valid!' });
+        }
+
         const existingNews = await prisma.news.findUnique({ 
             where: { id: parseInt(id) } 
         });
@@ -125,4 +133,32 @@ const deleteNews = async (req, res) => {
     }
 };
 
-module.exports = { createNews, getAllNews, updateNews, deleteNews };
+// Read by Id
+const getNewsById = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (isNaN(id)) {
+            return res.status(400).json({ success: false, message: 'Format ID tidak valid!' });
+        }
+        
+        const newsItem = await prisma.news.findUnique({
+            where: { id: parseInt(id) },
+            include: {
+                author: {
+                    select: { name: true }
+                }
+            }
+        });
+
+        if (!newsItem) {
+            return res.status(404).json({ success: false, message: 'Berita tidak ditemukan!' });
+        }
+
+        res.status(200).json({ success: true, data: newsItem });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Gagal mengambil detail berita: ' + error.message });
+    }
+};
+
+module.exports = { createNews, getAllNews, updateNews, deleteNews, getNewsById };

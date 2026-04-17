@@ -26,6 +26,10 @@ const updateSchedule = async (req, res) => {
     const { day, open, close, isClosed } = req.body;
 
     try {
+        if (isNaN(id)) {
+            return res.status(400).json({ success: false, message: 'Format ID tidak valid, harus berupa angka!' });
+        }
+        
         const existingSchedule = await prisma.operationalHour.findUnique({
             where: { id: parseInt(id) }
         });
@@ -102,6 +106,10 @@ const deleteSchedule = async (req, res) => {
     const { id } = req.params;
 
     try {
+        if (isNaN(id)) {
+            return res.status(400).json({ success: false, message: 'Format ID tidak valid, harus berupa angka!' });
+        }
+
         const existingSchedule = await prisma.operationalHour.findUnique({
             where: { id: parseInt(id) }
         });
@@ -122,9 +130,33 @@ const deleteSchedule = async (req, res) => {
     }
 };
 
+// Read by ID
+const getOperationalHourById = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (isNaN(id)) {
+            return res.status(400).json({ success: false, message: 'Format ID tidak valid, harus berupa angka!' });
+        }
+
+        const opHour = await prisma.operationalHour.findUnique({
+            where: { id: parseInt(id) }
+        });
+
+        if (!opHour) {
+            return res.status(404).json({ success: false, message: 'Data jam operasional tidak ditemukan!' });
+        }
+
+        res.status(200).json({ success: true, data: opHour });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Gagal mengambil detail jam operasional: ' + error.message });
+    }
+};
+
 module.exports = {
     getAllSchedules,
     addSchedule,
     updateSchedule,
-    deleteSchedule
+    deleteSchedule,
+    getOperationalHourById
 };
