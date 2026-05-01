@@ -168,10 +168,37 @@ const getActivityById = async (req, res) => {
     }
 };
 
+// Daftar kegiatan
+const joinActivity = async (req, res) => {
+    try {
+        const { activityId } = req.params;
+        const { userId } = req.body;
+
+        if (isNaN(activityId)) {
+            return res.status(400).json({ success: false, message: 'ID Kegiatan tidak valid!' });
+        }
+
+        const participant = await prisma.activityParticipant.create({
+            data: { 
+                userId: parseInt(userId), 
+                activityId: parseInt(activityId) 
+            }
+        });
+
+        res.status(201).json({ success: true, message: 'Berhasil mengikuti kegiatan!', data: participant });
+    } catch (error) {
+        if (error.code === 'P2002') {
+            return res.status(400).json({ success: false, message: 'Kamu sudah terdaftar di kegiatan ini!' });
+        }
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 module.exports = {
     createActivity,
     getAllActivities,
     updateActivity,
     deleteActivity,
-    getActivityById
+    getActivityById,
+    joinActivity
 };

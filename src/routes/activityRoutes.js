@@ -8,5 +8,6 @@ router.get('/', activityController.getAllActivities);
 router.get('/:id', activityController.getActivityById);    
 router.put('/:id', activityController.updateActivity);     
 router.delete('/:id', activityController.deleteActivity);  
+router.post('/:activityId/join', activityController.joinActivity);
 
 module.exports = router;
