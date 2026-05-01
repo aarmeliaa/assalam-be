@@ -16,9 +16,13 @@ app.get('/api/health', (req, res) => {
 const operationalRoutes = require('./routes/operationalRoutes');
 const activityRoutes = require('./routes/activityRoutes');
 const newsRoutes = require('./routes/newsRoutes');
+const homeRoutes = require('./routes/homeRoutes');
+const locationRoutes = require('./routes/locationRoutes');
 
 app.use('/api/operational-hours', operationalRoutes);
 app.use('/api/activities', activityRoutes);
 app.use('/api/news', newsRoutes);
+app.use('/api/home', homeRoutes);
+app.use('/api/locations', locationRoutes);
 
 module.exports = app;
