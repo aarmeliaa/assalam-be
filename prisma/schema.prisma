@@ -111,3 +111,19 @@ model ActivityParticipant {
   @@unique([userId, activityId])
   @@map("activity_participants")
 }
+
+// Lokasi Masjid (untuk integrasi Map Leaflet)
+model MosqueLocation {
+  id        Int      @id @default(autoincrement())
+  name      String   // Nama masjid (cth: "Masjid As-Salam" atau nama masjid sekitar)
+  address   String   @db.Text
+  latitude  Float    // Koordinat lintang untuk Leaflet
+  longitude Float    // Koordinat bujur untuk Leaflet
+  imageUrl  String?  // Gambar thumbnail untuk bagian "masjid lain di sekitar"
+  isMain    Boolean  @default(false) // true = Masjid utama, false = Masjid sekitar
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("mosque_locations")
+}
