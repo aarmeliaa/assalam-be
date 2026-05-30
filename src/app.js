@@ -1,23 +1,33 @@
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const { config } = require('./config/env');
+const { errorHandler, notFoundHandler } = require('./middlewares/errorHandler');
 
 const app = express();
 
+// CORS Middleware - menggunakan config dari env
 app.use(cors({
-    origin: ['http://localhost:3000', 'http://localhost:5173', 'https://assalam-fe.vercel.app/'],
-    credentials: true
+    origin: config.cors.origin,
+    credentials: config.cors.credentials
 }));
-app.use(express.json());
+
+// Body Parser Middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(cookieParser());
 
+// Health Check Endpoint
 app.get('/api/health', (req, res) => {
     res.status(200).json({
         success: true,
-        message: 'Server is healthy and running!'
+        message: 'Server is healthy and running!',
+        timestamp: new Date().toISOString(),
+        environment: config.nodeEnv
     });
 });
 
+// Routes
 const authRoutes = require('./routes/authRoutes');
 const operationalRoutes = require('./routes/operationalRoutes');
 const activityRoutes = require('./routes/activityRoutes');
@@ -31,5 +41,11 @@ app.use('/api/activities', activityRoutes);
 app.use('/api/news', newsRoutes);
 app.use('/api/home', homeRoutes);
 app.use('/api/locations', locationRoutes);
+
+// 404 Not Found Handler (HARUS setelah semua routes)
+app.use(notFoundHandler);
+
+// Global Error Handler (HARUS di paling akhir)
+app.use(errorHandler);
 
 module.exports = app;
