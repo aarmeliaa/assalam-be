@@ -32,6 +32,7 @@ model User {
   
   news         News[]
   participated ActivityParticipant[]
+  refreshTokens RefreshToken[]
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -127,4 +128,16 @@ model MosqueLocation {
   updatedAt DateTime @updatedAt
 
   @@map("mosque_locations")
+}
+
+// Refresh Token
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("refresh_tokens")
 }
