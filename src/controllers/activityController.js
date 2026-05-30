@@ -1,7 +1,6 @@
-const { PrismaClient } = require('@prisma/client');
 const moment = require('moment-timezone');
 
-const prisma = new PrismaClient();
+const prisma = require('../config/prisma');
 
 const combineDateAndTime = (dateString, timeString) => {
     return moment.tz(`${dateString} ${timeString}`, "YYYY-MM-DD HH:mm", "Europe/Vienna").toDate();
@@ -172,7 +171,7 @@ const getActivityById = async (req, res) => {
 const joinActivity = async (req, res) => {
     try {
         const { activityId } = req.params;
-        const { userId } = req.body;
+        const userId = req.user.userId;
 
         if (isNaN(activityId)) {
             return res.status(400).json({ success: false, message: 'ID Kegiatan tidak valid!' });

@@ -1,15 +1,15 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../config/prisma');
 const { uploadToSupabase } = require('../middlewares/upload');
 
 // Create
 const createNews = async (req, res) => {
     try {
-        const { title, summary, content, status, authorId } = req.body;
+        const { title, summary, content, status } = req.body;
+        const authorId = req.user.userId; // Ambil dari token, bukan dari body
         let imageUrl = null;
 
-        if (!title || !content || !authorId) {
-            return res.status(400).json({ success: false, message: 'Judul, konten, dan Author ID wajib diisi!' });
+        if (!title || !content) {
+            return res.status(400).json({ success: false, message: 'Judul dan konten wajib diisi!' });
         }
 
         if (req.file) {
