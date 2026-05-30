@@ -1,5 +1,5 @@
 const { generateAccessToken, generateRefreshToken } = require('../utils/jwt');
-const { verifyGoogleToken, findOrCreateUser } = require('../services/authService');
+const { verifyGoogleToken, findOrCreateUser } = require('../services/authServices');
 const prisma = require('../config/prisma');
 
 const googleAuth = async (req, res) => {
