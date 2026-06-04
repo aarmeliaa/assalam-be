@@ -1,10 +1,18 @@
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const swaggerUi = require('swagger-ui-express');
 const { config } = require('./config/env');
 const { errorHandler, notFoundHandler } = require('./middlewares/errorHandler');
+const swaggerSpec = require('./config/swagger');
 
 const app = express();
+
+// Swagger Documentation
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: 'Assalam API Documentation',
+}));
 
 // CORS Middleware - menggunakan config dari env
 app.use(cors({
@@ -18,6 +26,33 @@ app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(cookieParser());
 
 // Health Check Endpoint
+/**
+ * @openapi
+ * /api/health:
+ *   get:
+ *     tags: [Home]
+ *     summary: Health check server
+ *     responses:
+ *       200:
+ *         description: Server berjalan normal
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Server is healthy and running!"
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ *                 environment:
+ *                   type: string
+ *                   example: "development"
+ */
 app.get('/api/health', (req, res) => {
     res.status(200).json({
         success: true,
