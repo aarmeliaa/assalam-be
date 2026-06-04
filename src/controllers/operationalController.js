@@ -24,10 +24,6 @@ const updateSchedule = async (req, res) => {
     const { day, open, close, isClosed } = req.body;
 
     try {
-        if (isNaN(id)) {
-            return res.status(400).json({ success: false, message: 'Format ID tidak valid, harus berupa angka!' });
-        }
-        
         const existingSchedule = await prisma.operationalHour.findUnique({
             where: { id: parseInt(id) }
         });
@@ -75,10 +71,6 @@ const updateSchedule = async (req, res) => {
 const addSchedule = async (req, res) => {
     const { day, open, close, isClosed } = req.body;
 
-    if (!day) {
-        return res.status(400).json({ success: false, message: "Nama hari wajib diisi!" });
-    }
-
     try {
         const newSchedule = await prisma.operationalHour.create({
             data: {
@@ -104,10 +96,6 @@ const deleteSchedule = async (req, res) => {
     const { id } = req.params;
 
     try {
-        if (isNaN(id)) {
-            return res.status(400).json({ success: false, message: 'Format ID tidak valid, harus berupa angka!' });
-        }
-
         const existingSchedule = await prisma.operationalHour.findUnique({
             where: { id: parseInt(id) }
         });
@@ -132,10 +120,6 @@ const deleteSchedule = async (req, res) => {
 const getOperationalHourById = async (req, res) => {
     try {
         const { id } = req.params;
-
-        if (isNaN(id)) {
-            return res.status(400).json({ success: false, message: 'Format ID tidak valid, harus berupa angka!' });
-        }
 
         const opHour = await prisma.operationalHour.findUnique({
             where: { id: parseInt(id) }

@@ -1,16 +1,12 @@
 const prisma = require('../config/prisma');
-const { uploadToSupabase } = require('../middlewares/upload');
+const { uploadToSupabase, deleteFromSupabase } = require('../middlewares/upload');
 
 // Create
 const createNews = async (req, res) => {
     try {
         const { title, summary, content, status } = req.body;
-        const authorId = req.user.userId; // Ambil dari token, bukan dari body
+        const authorId = req.user.userId;
         let imageUrl = null;
-
-        if (!title || !content) {
-            return res.status(400).json({ success: false, message: 'Judul dan konten wajib diisi!' });
-        }
 
         if (req.file) {
             imageUrl = await uploadToSupabase(req.file);
@@ -63,10 +59,6 @@ const updateNews = async (req, res) => {
         const { id } = req.params;
         const { title, summary, content, status } = req.body;
 
-        if (isNaN(id)) {
-            return res.status(400).json({ success: false, message: 'Format ID tidak valid!' });
-        }
-
         const existingNews = await prisma.news.findUnique({ 
             where: { id: parseInt(id) } 
         });
@@ -78,8 +70,8 @@ const updateNews = async (req, res) => {
         let newImageUrl = existingNews.imageUrl;
 
         if (req.file) {
+            await deleteFromSupabase(existingNews.imageUrl);
             newImageUrl = await uploadToSupabase(req.file);
-            // To-do: tambahkan fungsi untuk menghapus gambar lama agar hemat resource.
         }
 
         const updatedNews = await prisma.news.update({
@@ -110,10 +102,6 @@ const deleteNews = async (req, res) => {
     try {
         const { id } = req.params;
 
-        if (isNaN(id)) {
-            return res.status(400).json({ success: false, message: 'Format ID tidak valid!' });
-        }
-
         const existingNews = await prisma.news.findUnique({ 
             where: { id: parseInt(id) } 
         });
@@ -121,6 +109,8 @@ const deleteNews = async (req, res) => {
         if (!existingNews) {
             return res.status(404).json({ success: false, message: 'Berita tidak ditemukan!' });
         }
+
+        await deleteFromSupabase(existingNews.imageUrl);
 
         await prisma.news.delete({ 
             where: { id: parseInt(id) } 
@@ -137,10 +127,6 @@ const deleteNews = async (req, res) => {
 const getNewsById = async (req, res) => {
     try {
         const { id } = req.params;
-
-        if (isNaN(id)) {
-            return res.status(400).json({ success: false, message: 'Format ID tidak valid!' });
-        }
         
         const newsItem = await prisma.news.findUnique({
             where: { id: parseInt(id) },

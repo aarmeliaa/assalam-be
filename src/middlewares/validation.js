@@ -83,12 +83,18 @@ const validateCreateActivity = [
         .trim()
         .notEmpty().withMessage('Deskripsi wajib diisi')
         .isLength({ min: 10 }).withMessage('Deskripsi minimal 10 karakter'),
+    body('startDate')
+        .notEmpty().withMessage('Tanggal mulai wajib diisi')
+        .matches(/^\d{4}-\d{2}-\d{2}$/).withMessage('Format tanggal mulai harus YYYY-MM-DD'),
     body('startTime')
-        .notEmpty().withMessage('Waktu mulai wajib diisi')
-        .isISO8601().withMessage('Format waktu tidak valid (gunakan ISO8601)'),
+        .notEmpty().withMessage('Jam mulai wajib diisi')
+        .matches(/^\d{2}:\d{2}$/).withMessage('Format jam mulai harus HH:mm'),
+    body('endDate')
+        .notEmpty().withMessage('Tanggal selesai wajib diisi')
+        .matches(/^\d{4}-\d{2}-\d{2}$/).withMessage('Format tanggal selesai harus YYYY-MM-DD'),
     body('endTime')
-        .notEmpty().withMessage('Waktu selesai wajib diisi')
-        .isISO8601().withMessage('Format waktu tidak valid (gunakan ISO8601)'),
+        .notEmpty().withMessage('Jam selesai wajib diisi')
+        .matches(/^\d{2}:\d{2}$/).withMessage('Format jam selesai harus HH:mm'),
     handleValidationErrors
 ];
 
@@ -103,12 +109,18 @@ const validateUpdateActivity = [
         .optional()
         .trim()
         .isLength({ min: 10 }).withMessage('Deskripsi minimal 10 karakter'),
+    body('startDate')
+        .optional()
+        .matches(/^\d{4}-\d{2}-\d{2}$/).withMessage('Format tanggal mulai harus YYYY-MM-DD'),
     body('startTime')
         .optional()
-        .isISO8601().withMessage('Format waktu tidak valid'),
+        .matches(/^\d{2}:\d{2}$/).withMessage('Format jam mulai harus HH:mm'),
+    body('endDate')
+        .optional()
+        .matches(/^\d{4}-\d{2}-\d{2}$/).withMessage('Format tanggal selesai harus YYYY-MM-DD'),
     body('endTime')
         .optional()
-        .isISO8601().withMessage('Format waktu tidak valid'),
+        .matches(/^\d{2}:\d{2}$/).withMessage('Format jam selesai harus HH:mm'),
     handleValidationErrors
 ];
 

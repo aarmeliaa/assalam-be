@@ -11,10 +11,6 @@ const combineDateAndTime = (dateString, timeString) => {
 const createActivity = async (req, res) => {
     const { title, startDate, startTime, endDate, endTime, description } = req.body;
 
-    if (!title || !startDate || !startTime || !endDate || !endTime || !description) {
-        return res.status(400).json({ success: false, message: "Semua kolom wajib diisi!" });
-    }
-
     try {
         const startDateTime = combineDateAndTime(startDate, startTime);
         const endDateTime = combineDateAndTime(endDate, endTime);
@@ -97,10 +93,6 @@ const updateActivity = async (req, res) => {
     const { title, startDate, startTime, endDate, endTime, description } = req.body;
 
     try {
-        if (isNaN(id)) {
-            return res.status(400).json({ success: false, message: 'Format ID tidak valid, harus berupa angka!' });
-        }
-
         const existingActivity = await prisma.activity.findUnique({
             where: { id: parseInt(id) }
         });
@@ -148,10 +140,6 @@ const deleteActivity = async (req, res) => {
     const { id } = req.params;
 
     try {
-        if (isNaN(id)) {
-            return res.status(400).json({ success: false, message: 'Format ID tidak valid, harus berupa angka!' });
-        }
-
         const existingActivity = await prisma.activity.findUnique({
             where: { id: parseInt(id) }
         });
@@ -179,10 +167,6 @@ const deleteActivity = async (req, res) => {
 const getActivityById = async (req, res) => {
     try {
         const { id } = req.params;
-
-        if (isNaN(id)) {
-            return res.status(400).json({ success: false, message: 'Format ID tidak valid, harus berupa angka!' });
-        }
 
         const activity = await prisma.activity.findUnique({
             where: { id: parseInt(id) }
