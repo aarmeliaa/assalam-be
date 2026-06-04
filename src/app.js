@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 const swaggerUi = require('swagger-ui-express');
 const { config } = require('./config/env');
@@ -12,6 +13,19 @@ const app = express();
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
     customCss: '.swagger-ui .topbar { display: none }',
     customSiteTitle: 'Assalam API Documentation',
+}));
+
+// Security Headers (Helmet) - izinkan CDN untuk Swagger UI
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", 'cdnjs.cloudflare.com'],
+            styleSrc: ["'self'", "'unsafe-inline'", 'cdnjs.cloudflare.com'],
+            imgSrc: ["'self'", 'data:', 'validator.swagger.io'],
+            fontSrc: ["'self'", 'cdnjs.cloudflare.com'],
+        },
+    },
 }));
 
 // CORS Middleware - menggunakan config dari env
