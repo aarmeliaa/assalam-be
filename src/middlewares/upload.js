@@ -1,21 +1,23 @@
 const multer = require('multer');
 const { createClient } = require('@supabase/supabase-js');
+const { config } = require('../config/env');
 
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+const supabase = createClient(config.supabase.url, config.supabase.key);
 
-// Setting Multer
 const storage = multer.memoryStorage();
 const upload = multer({ 
     storage: storage,
-    limits: { fileSize: 5 * 1024 * 1024 } // batas maksimal ukuran gambar: 5MB
+    limits: { fileSize: 5 * 1024 * 1024 }
 });
+
+const bucketName = 'articles';
 
 const uploadToSupabase = async (file) => {
     const fileName = `article-${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`;
     
     const { data, error } = await supabase
         .storage
-        .from('articles')
+        .from(bucketName)
         .upload(fileName, file.buffer, {
             contentType: file.mimetype,
         });
@@ -26,10 +28,25 @@ const uploadToSupabase = async (file) => {
 
     const { data: publicUrlData } = supabase
         .storage
-        .from('articles')
+        .from(bucketName)
         .getPublicUrl(fileName);
 
     return publicUrlData.publicUrl;
 };
 
-module.exports = { upload, uploadToSupabase, supabase };
+const deleteFromSupabase = async (imageUrl) => {
+    if (!imageUrl) return;
+
+    const fileName = imageUrl.split('/').pop();
+    
+    const { error } = await supabase
+        .storage
+        .from(bucketName)
+        .remove([fileName]);
+
+    if (error) {
+        console.error('Gagal hapus gambar lama dari Supabase:', error.message);
+    }
+};
+
+module.exports = { upload, uploadToSupabase, deleteFromSupabase, supabase };

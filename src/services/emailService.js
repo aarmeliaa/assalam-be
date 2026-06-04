@@ -1,18 +1,23 @@
-const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL;
+const { config } = require('../config/env');
 const RESEND_API_URL = 'https://api.resend.com/emails';
 
-if (!RESEND_API_KEY) {
-  throw new Error('Missing required environment variable RESEND_API_KEY');
-}
-
-if (!RESEND_FROM_EMAIL) {
-  throw new Error('Missing required environment variable RESEND_FROM_EMAIL');
-}
-
 const sendEmail = async ({ to, subject, html, text }) => {
+  const apiKey = config.resend.apiKey;
+  const fromEmail = config.resend.fromEmail;
+
+  if (!apiKey || !fromEmail) {
+    if (config.isDevelopment) {
+      console.log('[EMAIL DEV MODE] Skipping email send. Missing Resend credentials.');
+      console.log(`  To: ${to}`);
+      console.log(`  Subject: ${subject}`);
+      console.log(`  Body: ${text || html}`);
+      return { success: true, simulated: true };
+    }
+    throw new Error('Resend API key and from email are required to send emails');
+  }
+
   const payload = {
-    from: RESEND_FROM_EMAIL,
+    from: fromEmail,
     to,
     subject,
     html,
@@ -23,7 +28,7 @@ const sendEmail = async ({ to, subject, html, text }) => {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${RESEND_API_KEY}`
+      Authorization: `Bearer ${apiKey}`
     },
     body: JSON.stringify(payload)
   });
