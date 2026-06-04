@@ -1,17 +1,10 @@
-const { generateAccessToken, generateRefreshToken } = require('../utils/jwt');
+const { generateAccessToken, generateRefreshToken, verifyRefreshToken } = require('../utils/jwt');
 const { verifyGoogleToken, findOrCreateUser } = require('../services/authServices');
 const prisma = require('../config/prisma');
 
 const googleAuth = async (req, res) => {
     try {
         const { idToken } = req.body;
-        
-        if (!idToken) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'ID Token Google wajib diisi!' 
-            });
-        }
         
         // Verifikasi token Google
         const googlePayload = await verifyGoogleToken(idToken);
@@ -72,7 +65,7 @@ const googleAuth = async (req, res) => {
 
 const refreshAccessToken = async (req, res) => {
     try {
-        const refreshToken = req.cookies.refreshToken;
+        const { refreshToken } = req.cookies;
         
         if (!refreshToken) {
             return res.status(401).json({ 
@@ -81,7 +74,10 @@ const refreshAccessToken = async (req, res) => {
             });
         }
         
-        // Cek apakah refresh token ada di database
+        // Verifikasi JWT dulu, baru cek DB
+        const decoded = verifyRefreshToken(refreshToken);
+        
+        // Cari token di database
         const storedToken = await prisma.refreshToken.findUnique({
             where: { token: refreshToken }
         });
@@ -93,14 +89,22 @@ const refreshAccessToken = async (req, res) => {
             });
         }
         
-        // Verifikasi refresh token
-        const { verifyRefreshToken } = require('../utils/jwt');
-        const decoded = verifyRefreshToken(refreshToken);
+        // Hapus token yang sudah dipakai (rotation)
+        await prisma.refreshToken.deleteMany({
+            where: { userId: decoded.userId }
+        });
         
         // Generate access token baru
         const user = await prisma.user.findUnique({
             where: { id: decoded.userId }
         });
+        
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User tidak ditemukan!'
+            });
+        }
         
         const newAccessToken = generateAccessToken({
             userId: user.id,
@@ -124,14 +128,12 @@ const refreshAccessToken = async (req, res) => {
 
 const logout = async (req, res) => {
     try {
-        const refreshToken = req.cookies.refreshToken;
+        const userId = req.user.userId;
         
-        // Hapus refresh token dari database (blacklist)
-        if (refreshToken) {
-            await prisma.refreshToken.deleteMany({
-                where: { token: refreshToken }
-            });
-        }
+        // Hapus SEMUA refresh token user dari database
+        await prisma.refreshToken.deleteMany({
+            where: { userId }
+        });
         
         // Hapus cookie
         res.clearCookie('refreshToken', {
