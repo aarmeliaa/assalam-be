@@ -37,6 +37,12 @@ const config = {
         refreshExpiration: process.env.JWT_REFRESH_EXPIRATION || '7d'
     },
 
+    // Resend email
+    resend: {
+        apiKey: process.env.RESEND_API_KEY,
+        fromEmail: process.env.RESEND_FROM_EMAIL
+    },
+
     // CORS
     cors: {
         origin: (process.env.CORS_ORIGIN || 'http://localhost:3000,http://localhost:5173').split(',').map(url => url.trim()),
@@ -55,7 +61,9 @@ const validateConfig = () => {
         'SUPABASE_KEY',
         'GOOGLE_CLIENT_ID',
         'JWT_SECRET',
-        'JWT_REFRESH_SECRET'
+        'JWT_REFRESH_SECRET',
+        'RESEND_API_KEY',
+        'RESEND_FROM_EMAIL'
     ];
 
     const missing = requiredVars.filter(varName => !process.env[varName]);

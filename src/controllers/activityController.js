@@ -1,6 +1,7 @@
 const moment = require('moment-timezone');
 
 const prisma = require('../config/prisma');
+const { sendEmail } = require('../services/emailService');
 
 const combineDateAndTime = (dateString, timeString) => {
     return moment.tz(`${dateString} ${timeString}`, "YYYY-MM-DD HH:mm", "Europe/Vienna").toDate();
@@ -30,6 +31,36 @@ const createActivity = async (req, res) => {
                 endTime: endDateTime
             }
         });
+
+        // Kirim email notifikasi ke semua user terdaftar setelah kegiatan dibuat
+        const users = await prisma.user.findMany({
+            where: { role: 'USER' },
+            select: { email: true, name: true }
+        });
+
+        if (users.length > 0) {
+            await Promise.allSettled(users.map(user => {
+                const html = `
+                    <p>Assalamu'alaikum ${user.name || 'Saudara'},</p>
+                    <p>Admin baru saja menambahkan kegiatan baru:</p>
+                    <ul>
+                        <li><strong>Judul:</strong> ${newActivity.title}</li>
+                        <li><strong>Deskripsi:</strong> ${newActivity.description}</li>
+                        <li><strong>Mulai:</strong> ${moment(newActivity.startTime).format('YYYY-MM-DD HH:mm')}</li>
+                        <li><strong>Selesai:</strong> ${moment(newActivity.endTime).format('YYYY-MM-DD HH:mm')}</li>
+                    </ul>
+                    <p>Silakan cek aplikasi untuk detail dan pendaftaran kegiatan.</p>
+                `;
+
+                return sendEmail({
+                    to: user.email,
+                    subject: `Notifikasi Kegiatan Baru: ${newActivity.title}`,
+                    html,
+                    text: `Assalamu'alaikum ${user.name || 'Saudara'},\n\nAdmin baru saja menambahkan kegiatan baru:\n
+Judul: ${newActivity.title}\nDeskripsi: ${newActivity.description}\nMulai: ${moment(newActivity.startTime).format('YYYY-MM-DD HH:mm')}\nSelesai: ${moment(newActivity.endTime).format('YYYY-MM-DD HH:mm')}\n\nSilakan cek aplikasi untuk detail dan pendaftaran kegiatan.`
+                });
+            }));
+        }
 
         res.status(201).json({ 
             success: true, 
