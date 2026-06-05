@@ -39,6 +39,16 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(cookieParser());
 
+// Root route untuk Railway health check
+app.get('/', (req, res) => {
+    res.status(200).json({
+        success: true,
+        message: 'Assalam API is running',
+        timestamp: new Date().toISOString(),
+        environment: config.nodeEnv
+    });
+});
+
 // Health Check Endpoint
 /**
  * @openapi
