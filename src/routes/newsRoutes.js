@@ -83,7 +83,7 @@ const { validateCreateNews, validateUpdateNews, validateId } = require('../middl
  *         description: Tidak memiliki akses
  */
 router.get('/', getAllNews);
-router.post('/', verifyToken, checkRole(['ADMIN']), validateCreateNews, upload.single('image'), createNews);
+router.post('/', verifyToken, checkRole(['ADMIN']), upload.single('image'), validateCreateNews, createNews);
 
 /**
  * @openapi
@@ -180,7 +180,7 @@ router.post('/', verifyToken, checkRole(['ADMIN']), validateCreateNews, upload.s
  *         description: Berita tidak ditemukan
  */
 router.get('/:id', validateId, getNewsById);
-router.put('/:id', verifyToken, checkRole(['ADMIN']), validateUpdateNews, upload.single('image'), updateNews);
+router.put('/:id', verifyToken, checkRole(['ADMIN']), upload.single('image'), validateUpdateNews, updateNews);
 router.delete('/:id', verifyToken, checkRole(['ADMIN']), validateId, deleteNews);
 
 module.exports = router;
