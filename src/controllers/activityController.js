@@ -148,6 +148,10 @@ const deleteActivity = async (req, res) => {
             return res.status(404).json({ success: false, message: "Kegiatan tidak ditemukan" });
         }
 
+        await prisma.activityParticipant.deleteMany({
+            where: { activityId: parseInt(id) }
+        });
+
         await prisma.activity.delete({
             where: { id: parseInt(id) }
         });
