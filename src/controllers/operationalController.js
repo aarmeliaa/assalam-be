@@ -1,16 +1,33 @@
 const prisma = require('../config/prisma');
 
-// Read
+// Read (with pagination)
 const getAllSchedules = async (req, res) => {
     try {
-        const schedules = await prisma.operationalHour.findMany({
-            orderBy: { id: 'asc' }
-        });
+        let page = parseInt(req.query.page) || 1;
+        let limit = parseInt(req.query.limit) || 10;
+        if (page < 1) page = 1;
+        if (limit < 1 || limit > 100) limit = 10;
+        const skip = (page - 1) * limit;
+
+        const [schedules, total] = await Promise.all([
+            prisma.operationalHour.findMany({
+                orderBy: { id: 'asc' },
+                skip,
+                take: limit
+            }),
+            prisma.operationalHour.count()
+        ]);
 
         res.status(200).json({
             success: true,
             message: "Berhasil mengambil jadwal operasional dari database",
-            data: schedules
+            data: schedules,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit)
+            }
         });
     } catch (error) {
         console.error(error);
@@ -43,16 +60,15 @@ const updateSchedule = async (req, res) => {
             finalClose = "-";
         }
 
-        // Update ke database
+        const updateData = {};
+        if (day !== undefined) updateData.day = day;
+        if (finalOpen !== undefined) updateData.open = finalOpen;
+        if (finalClose !== undefined) updateData.close = finalClose;
+        if (isClosed !== undefined) updateData.isClosed = isClosed;
+
         const updatedSchedule = await prisma.operationalHour.update({
             where: { id: parseInt(id) },
-            data: {
-                day: day || existingSchedule.day,
-                open: finalOpen || existingSchedule.open,
-                close: finalClose || existingSchedule.close,
-                isClosed: isClosed !== undefined ? isClosed : existingSchedule.isClosed
-    
-            }
+            data: updateData
         });
 
         res.status(200).json({

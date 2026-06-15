@@ -27,8 +27,6 @@ model User {
   name         String
   role         Role     @default(USER)
   googleId     String   @unique
-  accessToken  String?  @db.Text
-  refreshToken String?  @db.Text
   
   news         News[]
   participated ActivityParticipant[]

@@ -35,19 +35,39 @@ const createNews = async (req, res) => {
     }
 };
 
-// Read
+// Read (with pagination)
 const getAllNews = async (req, res) => {
     try {
-        const newsList = await prisma.news.findMany({
-            orderBy: { createdAt: 'desc' }, 
-            include: {
-                author: {
-                    select: { name: true } 
+        let page = parseInt(req.query.page) || 1;
+        let limit = parseInt(req.query.limit) || 10;
+        if (page < 1) page = 1;
+        if (limit < 1 || limit > 100) limit = 10;
+        const skip = (page - 1) * limit;
+
+        const [newsList, total] = await Promise.all([
+            prisma.news.findMany({
+                orderBy: { createdAt: 'desc' },
+                skip,
+                take: limit,
+                include: {
+                    author: {
+                        select: { name: true }
+                    }
                 }
+            }),
+            prisma.news.count()
+        ]);
+
+        res.status(200).json({
+            success: true,
+            data: newsList,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit)
             }
         });
-
-        res.status(200).json({ success: true, data: newsList });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Gagal mengambil data berita: ' + error.message });
     }
@@ -74,15 +94,16 @@ const updateNews = async (req, res) => {
             newImageUrl = await uploadToSupabase(req.file);
         }
 
+        const updateData = {};
+        if (title !== undefined) updateData.title = title;
+        if (summary !== undefined) updateData.summary = summary;
+        if (content !== undefined) updateData.content = content;
+        if (status !== undefined) updateData.status = status;
+        updateData.imageUrl = newImageUrl;
+
         const updatedNews = await prisma.news.update({
             where: { id: parseInt(id) },
-            data: {
-                title: title || existingNews.title,
-                summary: summary || existingNews.summary,
-                content: content || existingNews.content,
-                status: status || existingNews.status,
-                imageUrl: newImageUrl
-            }
+            data: updateData
         });
 
         res.status(200).json({ 

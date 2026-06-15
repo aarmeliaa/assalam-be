@@ -10,11 +10,11 @@ REST API backend untuk aplikasi Assalam - Platform informasi masjid dengan fitur
 - **ORM**: Prisma v6.19.2
 - **Authentication**: Google OAuth + JWT
 - **Storage**: Supabase Storage
-- **Deployment**: Vercel
+- **Deployment**: Railway
 
 ## 📋 Requirements
 
-- Node.js v16 atau lebih tinggi
+- Node.js v18 atau lebih tinggi
 - npm atau yarn
 - PostgreSQL database (atau gunakan Supabase)
 - Google OAuth credentials
@@ -108,23 +108,27 @@ npx prisma studio   # Buka Prisma Studio (database GUI)
 npx prisma migrate  # Manage migrations
 ```
 
-## 📚 API Endpoints
+## 📚 API Documentation
+
+Swagger UI tersedia di `/api/docs` saat server berjalan.
 
 ### Authentication
+- `POST /api/auth/google` - Login dengan Google OAuth (**rate limited: 10x/15 menit**)
+- `POST /api/auth/refresh` - Refresh access token (**rate limited: 10x/15 menit**)
 - `POST /api/auth/google` - Login dengan Google OAuth
 - `POST /api/auth/refresh` - Refresh access token
 - `POST /api/auth/logout` - Logout dan clear refresh token
 - `DELETE /api/auth/account` - Hapus account (permanent)
 
 ### News (Berita)
-- `GET /api/news` - Daftar semua berita
+- `GET /api/news` - Daftar semua berita (pagination: `?page=1&limit=10`)
 - `GET /api/news/:id` - Detail berita
 - `POST /api/news` - Buat berita (ADMIN only)
 - `PUT /api/news/:id` - Edit berita (ADMIN only)
 - `DELETE /api/news/:id` - Hapus berita (ADMIN only)
 
 ### Activities (Kegiatan)
-- `GET /api/activities` - Daftar semua kegiatan
+- `GET /api/activities` - Daftar semua kegiatan (pagination: `?page=1&limit=10`)
 - `GET /api/activities/:id` - Detail kegiatan
 - `POST /api/activities` - Buat kegiatan (ADMIN only)
 - `PUT /api/activities/:id` - Edit kegiatan (ADMIN only)
@@ -132,7 +136,7 @@ npx prisma migrate  # Manage migrations
 - `POST /api/activities/:activityId/join` - Ikuti kegiatan (USER/ADMIN)
 
 ### Operational Hours (Jam Operasional)
-- `GET /api/operational-hours` - Daftar jam operasional
+- `GET /api/operational-hours` - Daftar jam operasional (pagination: `?page=1&limit=10`)
 - `GET /api/operational-hours/:id` - Detail jam operasional
 - `POST /api/operational-hours` - Buat jam operasional (ADMIN only)
 - `PUT /api/operational-hours/:id` - Edit jam operasional (ADMIN only)
@@ -152,6 +156,8 @@ npx prisma migrate  # Manage migrations
 - ✅ **Role-based Access Control** - USER vs ADMIN roles
 - ✅ **Token Blacklisting** - Refresh token stored in database untuk logout
 - ✅ **HttpOnly Cookies** - Refresh token tidak accessible via JavaScript
+- ✅ **Helmet.js** - Security headers (CSP, XSS, dll) untuk production
+- ✅ **Rate Limiting** - 10 request/15 menit untuk auth endpoints
 - ✅ **CORS Protection** - Environment-based whitelist
 - ✅ **Input Validation** - express-validator untuk sanitasi data
 - ✅ **Error Handling** - Global error handler untuk consistent error responses
@@ -177,8 +183,11 @@ npx prisma migrate  # Manage migrations
 ### Validation
 - `validateGoogleAuth` - Validasi Google OAuth
 - `validateCreateNews` - Validasi input berita
+- `validateUpdateNews` - Validasi update berita
 - `validateCreateActivity` - Validasi input kegiatan
+- `validateUpdateActivity` - Validasi update kegiatan
 - `validateCreateOperationalHour` - Validasi jam operasional
+- `validateId` - Validasi ID parameter (angka positif)
 
 ### Error Handling
 - Global error handler untuk PrismaErrors, JWTErrors, MultipartErrors
@@ -194,28 +203,34 @@ Semua config environment di-centralize di `src/config/env.js` untuk:
 
 ## 🚀 Deployment
 
-### Vercel
-Project sudah di-setup untuk deployment ke Vercel:
+Project dideploy ke **Railway** sebagai long-running server (bukan serverless).
 
+### Railway
 ```bash
-npm run build  # Build production
-vercel deploy   # Deploy
+# Pastikan semua environment variable sudah di-set di Railway dashboard
+# Railway akan otomatis:
+# 1. Install dependencies (npm install)
+# 2. Generate Prisma client via postinstall
+# 3. Jalankan migrasi dan start server (npm start)
 ```
 
-Environment variables harus di-set di Vercel dashboard.
-
-### Heroku (Alternative)
-```bash
-# Create app
-heroku create assalam-backend
-
-# Set environment variables
-heroku config:set DATABASE_URL="..."
-heroku config:set JWT_SECRET="..."
-# ... set semua variables
-
-# Deploy
-git push heroku main
+### Environment Variables (Railway Dashboard)
+Set semua variabel berikut di Railway dashboard:
+```
+PORT=3000
+NODE_ENV=production
+DATABASE_URL=...
+DIRECT_URL=...
+SUPABASE_URL=...
+SUPABASE_KEY=...
+GOOGLE_CLIENT_ID=...
+JWT_SECRET=...
+JWT_REFRESH_SECRET=...
+JWT_ACCESS_EXPIRATION=15m
+JWT_REFRESH_EXPIRATION=7d
+CORS_ORIGIN=...
+RESEND_API_KEY=...
+RESEND_FROM_EMAIL=...
 ```
 
 ## 🐛 Troubleshooting

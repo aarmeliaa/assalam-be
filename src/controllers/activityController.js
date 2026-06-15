@@ -7,6 +7,11 @@ const combineDateAndTime = (dateString, timeString) => {
     return moment.tz(`${dateString} ${timeString}`, "YYYY-MM-DD HH:mm", "Europe/Vienna").toDate();
 };
 
+const parseId = (value) => {
+    const num = Number(value);
+    return Number.isInteger(num) && num > 0 ? num : null;
+};
+
 // Create
 const createActivity = async (req, res) => {
     const { title, startDate, startTime, endDate, endTime, description } = req.body;
@@ -69,17 +74,34 @@ Judul: ${newActivity.title}\nDeskripsi: ${newActivity.description}\nMulai: ${mom
     }
 };
 
-// Read
+// Read (with pagination)
 const getAllActivities = async (req, res) => {
     try {
-        const activities = await prisma.activity.findMany({
-            orderBy: { startTime: 'asc' }
-        });
+        let page = parseInt(req.query.page) || 1;
+        let limit = parseInt(req.query.limit) || 10;
+        if (page < 1) page = 1;
+        if (limit < 1 || limit > 100) limit = 10;
+        const skip = (page - 1) * limit;
+
+        const [activities, total] = await Promise.all([
+            prisma.activity.findMany({
+                orderBy: { startTime: 'asc' },
+                skip,
+                take: limit
+            }),
+            prisma.activity.count()
+        ]);
 
         res.status(200).json({
             success: true,
             message: "Berhasil mengambil daftar kegiatan",
-            data: activities
+            data: activities,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit)
+            }
         });
     } catch (error) {
         console.error(error);
@@ -192,14 +214,15 @@ const joinActivity = async (req, res) => {
         const { activityId } = req.params;
         const userId = req.user.userId;
 
-        if (isNaN(activityId)) {
+        const parsedActivityId = parseId(activityId);
+        if (!parsedActivityId) {
             return res.status(400).json({ success: false, message: 'ID Kegiatan tidak valid!' });
         }
 
         const participant = await prisma.activityParticipant.create({
             data: { 
                 userId: parseInt(userId), 
-                activityId: parseInt(activityId) 
+                activityId: parsedActivityId
             }
         });
 

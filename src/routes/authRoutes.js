@@ -1,8 +1,21 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const router = express.Router();
 const { googleAuth, refreshAccessToken, logout, deleteAccount } = require('../controllers/authController');
 const { verifyToken } = require('../middlewares/auth');
 const { validateGoogleAuth } = require('../middlewares/validation');
+
+// Rate limiting: max 10 requests per 15 menit untuk auth endpoints
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    message: {
+        success: false,
+        message: 'Terlalu banyak permintaan. Silakan coba lagi dalam 15 menit.'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
 
 /**
  * @openapi
@@ -41,7 +54,7 @@ const { validateGoogleAuth } = require('../middlewares/validation');
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/google', validateGoogleAuth, googleAuth);
+router.post('/google', authLimiter, validateGoogleAuth, googleAuth);
 
 /**
  * @openapi
@@ -79,7 +92,7 @@ router.post('/google', validateGoogleAuth, googleAuth);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/refresh', refreshAccessToken);
+router.post('/refresh', authLimiter, refreshAccessToken);
 
 /**
  * @openapi
