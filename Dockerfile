@@ -1,25 +1,29 @@
-# Gunakan image Node.js versi 18 Alpine
-FROM node:18-alpine
+# 1. Ganti image Node.js menjadi versi 20
+FROM node:20-alpine
 
-# Wajib untuk Prisma Engine di Alpine Linux
+# 2. Wajib untuk Prisma Engine di Alpine Linux
 RUN apk add --no-cache openssl
 
-# Set folder kerja di dalam container
+# 3. Set folder kerja di dalam container
 WORKDIR /app
 
-# Copy package.json dan install dependency
+# 4. Copy package.json
 COPY package*.json ./
+
+# 5. Copy folder prisma sebelum npm install
+COPY prisma ./prisma/
+
+# 6. Install dependency
 RUN npm install
 
-# Copy folder prisma dan generate client
-COPY prisma ./prisma/
+# 7. Generate Prisma Client
 RUN npx prisma generate
 
-# Copy seluruh sisa kodingan
+# 8. Copy seluruh sisa kodingan
 COPY . .
 
-# Buka port
+# 9. Buka port
 EXPOSE 3000
 
-# Perintah menjalankan server
+# 10. Perintah menjalankan server
 CMD ["npm", "start"]
